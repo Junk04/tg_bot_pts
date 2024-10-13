@@ -1,0 +1,94 @@
+services:
+  tg_bot:
+    build:
+      context: ./tg_bot
+      dockerfile: Dockerfile.bot
+    environment:
+      TOKEN: ${TOKEN}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_DATABASE}
+    ports:
+      - 8080:80
+    env_file:
+      - .env
+    volumes:
+      - db-logs:/var/log/postgresql/
+    depends_on:
+      - db
+    networks:
+      custom_network:
+        ipv4_address:  172.20.5.1
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile.db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    env_file:
+      - .env
+    volumes:
+      - db-logs:/var/log/postgresql/
+    command: |
+      postgres
+      -c archive_mode=on
+      -c archive_command='cp %p /oracle/pg_data/archive/%f'
+      -c wal_log_hints=on
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+      -c log_replication_commands=on
+      -c logging_collector=on
+      -c log_directory=/var/log/postgresql/
+    networks:
+      custom_network:
+        ipv4_address:  172.20.5.2
+
+  db_repl:
+    build:
+      context: ./db_repl
+      dockerfile: Dockerfile.db_repl
+    ports:
+      - "5433:5433"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - replica-data:/var/lib/postgresql/data
+    command: |
+      bash -c "
+      rm -rf /var/lib/postgresql/data/*
+      until echo $$DB_REPL_PASSWORD | pg_basebackup --pgdata=/var/lib/postgresql/data/ -R --username=$$DB_REPL_USER --host=$$DB_HOST --port=5432
+      do
+        echo 'Waiting for primary to connect...'
+        sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chown -R postgres:postgres /var/lib/postgresql/data/
+      chmod 0700 /var/lib/postgresql/data/
+      su postgres -c 'postgres'
+      "
+    networks:
+      custom_network:
+        ipv4_address:  172.20.5.3
+volumes:
+  db-data: {}
+  replica-data: {}
+  db-logs: {}
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
