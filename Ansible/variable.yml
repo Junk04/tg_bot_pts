@@ -1,0 +1,27 @@
+all:
+  hosts:
+    master:
+      ansible_host: 192.168.157.157
+      ansible_user: ansible
+      ansible_password: 123
+    slave:
+      ansible_host: 192.168.157.155
+      ansible_user: ansible
+      ansible_password: 123
+  vars:
+    WORKDIR: /srv/app
+    DB_HOST: 192.168.157.157
+    DB_PORT: 5432
+    DB_PASSWORD: 123
+    DB_DATABASE: shumkin
+    DB_USER: postgres
+    DB_REPL_USER: repl_shumkin
+    DB_REPL_PASSWORD: 123
+    DB_REPL_HOST: 192.168.157.155
+    DB_REPL_PORT: 5432
+    GIT_URL: https://github.com/Junk04/tg_bot_pts
+    TOKEN: 7876275556:AAGOa2T9HD9OWQW9tfElT9orYQhqY2mRCCE
+    RM_HOST: 192.168.157.147
+    RM_PORT: 22
+    RM_USER: root
+    RM_PASSWORD: kali
