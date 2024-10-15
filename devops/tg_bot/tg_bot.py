@@ -332,20 +332,19 @@ def get_apt_list(update: Update, context):
 
 # Сбор информации о запущенных сервисах
 
-def get_services_Command(update: Update, context):
-    update.message.reply_text('Введите название сервиса ')
+#def get_services_Command(update: Update, context):
+#    update.message.reply_text('Введите название сервиса ')
 
-    return 'get_services'
+#    return 'get_services'
 
 def get_services(update: Update, context):
-    user_input = update.message.text
-    command = f"systemctl status '{user_input}'"
+    command = f"service --status-all | grep '\[ + \]' | head -n 15"
     result = ssh_connect(command)
-    if not result:
-        update.message.reply_text(f'Сервис "{user_input}" не найден.')
-    else:
-        update.message.reply_text(result)
-    return ConversationHandler.END
+#    if not result:
+#        update.message.reply_text(f'Сервис "{user_input}" не найден.')
+#    else:
+    update.message.reply_text(result)
+#    return ConversationHandler.END
 
 
 
@@ -499,13 +498,13 @@ def main():
         fallbacks=[]
     )
 
-    convHandler_get_services = ConversationHandler(
-        entry_points=[CommandHandler('get_services', get_services_Command)],
-        states={
-            'get_services': [MessageHandler(Filters.text & ~Filters.command, get_services)],
-        },
-        fallbacks=[]
-    )
+#    convHandler_get_services = ConversationHandler(
+#        entry_points=[CommandHandler('get_services', get_services_Command)],
+#        states={
+#            'get_services': [MessageHandler(Filters.text & ~Filters.command, get_services)],
+#        },
+#        fallbacks=[]
+#    )
 
 
     convHandler_get_apt_list = ConversationHandler(
@@ -522,7 +521,7 @@ def main():
     dp.add_handler(convHandler_find_email)
     dp.add_handler(convHandler_verify_password)
     dp.add_handler(convHandler_get_apt_list)
-    dp.add_handler(convHandler_get_services)
+ #   dp.add_handler(convHandler_get_services)
 
     dp.add_handler(CommandHandler("get_release", get_release))
     dp.add_handler(CommandHandler("get_uname", get_uname))
@@ -538,7 +537,7 @@ def main():
     dp.add_handler(CommandHandler("get_repl_logs", get_repl_logs))
     dp.add_handler(CommandHandler("get_emails", get_emails))
     dp.add_handler(CommandHandler("get_phone_numbers", get_phone_numbers))
-
+    dp.add_handler(CommandHandler("get_services", get_services))
 	# Регистрируем обработчики команд
     dp.add_handler(CommandHandler("start", start))
 		
